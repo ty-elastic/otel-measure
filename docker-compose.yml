@@ -15,6 +15,7 @@ services:
       - /proc:/hostfs/proc:ro
       - /sys:/hostfs/sys:ro
       - /:/hostfs:ro # Mount root for full disk/filesystem stats
+    network_mode: "host" # Recommended to avoid container-level network abstraction
     user: "0" # Often required to read host /proc files
     ports:
       - "4317:4317" # OTLP gRPC receiver

@@ -1,7 +1,7 @@
 receivers:
 
   hostmetrics/system:
-    collection_interval: 60s
+    collection_interval: 5m
     scrapers:
       cpu:
         metrics:
@@ -16,13 +16,13 @@ receivers:
       load:
 
   hostmetrics/disk:
-    collection_interval: 60s
+    collection_interval: 9m
     scrapers:
       disk:
       filesystem:
 
   hostmetrics/network:
-    collection_interval: 60s
+    collection_interval: 120s
     scrapers:
       network:
 
