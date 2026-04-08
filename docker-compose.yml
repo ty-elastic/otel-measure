@@ -11,9 +11,12 @@ services:
     container_name: otel-collector
     command: ["--config=/etc/otel-config.yaml"]
     environment:
-      - SYSTEM_COLLECTION_INTERVAL=60s
-      - DISK_COLLECTION_INTERVAL=60s
-      - NETWORK_COLLECTION_INTERVAL=60s
+      - SYSTEM_COLLECTION_INTERVAL=5m
+      - DISK_COLLECTION_INTERVAL=9m
+      - NETWORK_COLLECTION_INTERVAL=120s
+      #- SYSTEM_COLLECTION_INTERVAL=60s
+      #- DISK_COLLECTION_INTERVAL=60s
+      #- NETWORK_COLLECTION_INTERVAL=60s
     volumes:
       - ./collector/otel-config.yaml:/etc/otel-config.yaml
       - /proc:/hostfs/proc:ro
