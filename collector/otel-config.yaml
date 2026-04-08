@@ -1,6 +1,7 @@
 receivers:
 
   hostmetrics/system:
+    root_path: /hostfs
     collection_interval: 5m
     scrapers:
       cpu:
@@ -16,12 +17,14 @@ receivers:
       load:
 
   hostmetrics/disk:
+    root_path: /hostfs
     collection_interval: 9m
     scrapers:
       disk:
       filesystem:
 
   hostmetrics/network:
+    root_path: /hostfs
     collection_interval: 120s
     scrapers:
       network:
@@ -62,7 +65,7 @@ processors:
 exporters:
   # Exporter to send logs and metrics to Elasticsearch
   elasticsearch/otel:
-    endpoints: [ "http://otel-measurement:8080" ]
+    endpoints: [ "http://127.0.0.1:8080" ]
     tls:
       insecure: true
     mapping:
