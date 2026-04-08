@@ -18,10 +18,11 @@ import (
 )
 
 var (
-	requestCount      atomic.Int64
-	bytesReceived     atomic.Int64
-	documentCount     atomic.Int64
-	totalMeteredBytes atomic.Int64
+	requestCount          atomic.Int64
+	bytesReceived         atomic.Int64
+	documentCount         atomic.Int64
+	documentBytesReceived atomic.Int64
+	totalMeteredBytes     atomic.Int64
 )
 
 // ActionParams holds the metadata fields common to all bulk action types.
@@ -155,11 +156,12 @@ func bulkHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var metered int64
+	var metered, docBytes int64
 	for _, item := range items {
 		if item.Document == nil {
 			continue
 		}
+		docBytes += int64(len(item.Document))
 		var doc any
 		if err := json.Unmarshal(item.Document, &doc); err != nil {
 			log.Printf("error unmarshaling document for metering: %v", err)
@@ -171,6 +173,7 @@ func bulkHandler(w http.ResponseWriter, r *http.Request) {
 	requestCount.Add(1)
 	bytesReceived.Add(int64(len(body)))
 	documentCount.Add(int64(len(items)))
+	documentBytesReceived.Add(docBytes)
 	totalMeteredBytes.Add(metered)
 
 	w.Header().Set("X-Elastic-Product", "Elasticsearch")
@@ -190,16 +193,18 @@ func statsLogger(interval time.Duration) {
 		count := requestCount.Load()
 		bytes := bytesReceived.Load()
 		docs := documentCount.Load()
+		docBytes := documentBytesReceived.Load()
 		metered := totalMeteredBytes.Load()
 
 		rps := float64(count) / elapsed
 		throughput := float64(bytes) / elapsed / 1024 / 1024
 		dps := float64(docs) / elapsed
 		totalGBPerHour := float64(bytes) / elapsed * 3600 / 1024 / 1024 / 1024
+		docGBPerHour := float64(docBytes) / elapsed * 3600 / 1024 / 1024 / 1024
 		meteredGBPerHour := float64(metered) / elapsed * 3600 / 1024 / 1024 / 1024
 
-		log.Printf("requests/s=%.0f  docs/s=%.0f  throughput=%.2f MB/s  total_gigabytes/hour=%.4f  metered_gigabytes/hour=%.4f  total_requests=%d  total_docs=%d  total_bytes=%d  total_metered_bytes=%d",
-			rps, dps, throughput, totalGBPerHour, meteredGBPerHour, count, docs, bytes, metered)
+		log.Printf("requests/s=%.0f  docs/s=%.0f  throughput=%.2f MB/s  total_gigabytes/hour=%.4f  document_gigabytes/hour=%.4f  metered_gigabytes/hour=%.4f  total_requests=%d  total_docs=%d  total_bytes=%d  total_metered_bytes=%d",
+			rps, dps, throughput, totalGBPerHour, docGBPerHour, meteredGBPerHour, count, docs, bytes, metered)
 	}
 }
 
