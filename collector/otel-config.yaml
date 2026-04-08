@@ -2,7 +2,7 @@ receivers:
 
   hostmetrics/system:
     root_path: /hostfs
-    collection_interval: 5m
+    collection_interval: ${env:SYSTEM_COLLECTION_INTERVAL} 
     scrapers:
       cpu:
         metrics:
@@ -18,14 +18,14 @@ receivers:
 
   hostmetrics/disk:
     root_path: /hostfs
-    collection_interval: 9m
+    collection_interval: ${env:DISK_COLLECTION_INTERVAL} 
     scrapers:
       disk:
       filesystem:
 
   hostmetrics/network:
     root_path: /hostfs
-    collection_interval: 120s
+    collection_interval: ${env:NETWORK_COLLECTION_INTERVAL} 
     scrapers:
       network:
 
