@@ -62,6 +62,12 @@ processors:
         os.type:
           enabled: true
 
+processors:
+  batch:
+    send_batch_size: 1000
+    timeout: 1s
+    send_batch_max_size: 1500
+
 exporters:
   # Exporter to send logs and metrics to Elasticsearch
   elasticsearch/otel:
@@ -75,5 +81,5 @@ service:
   pipelines:
     metrics/hostmetrics:
       receivers: [hostmetrics/system, hostmetrics/disk, hostmetrics/network]
-      processors: [resourcedetection]
+      processors: [batch, resourcedetection]
       exporters: [elasticsearch/otel]
