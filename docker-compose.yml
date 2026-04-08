@@ -1,0 +1,22 @@
+services:
+  otel-measurement:
+    build: ./measure
+    container_name: otel-measurement
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: otel-collector
+    command: ["--config=/etc/otel-config.yaml"]
+    volumes:
+      - ./collector/otel-config.yaml:/etc/otel-config.yaml
+      - /proc:/hostfs/proc:ro
+      - /sys:/hostfs/sys:ro
+      - /:/hostfs:ro # Mount root for full disk/filesystem stats
+    user: "0" # Often required to read host /proc files
+    ports:
+      - "4317:4317" # OTLP gRPC receiver
+      - "4318:4318" # OTLP HTTP receiver
+    restart: unless-stopped

@@ -1,0 +1,76 @@
+receivers:
+
+  hostmetrics/system:
+    collection_interval: 60s
+    scrapers:
+      cpu:
+        metrics:
+          system.cpu.utilization:
+            enabled: true
+          system.cpu.logical.count:
+            enabled: true
+      memory:
+        metrics:
+          system.memory.utilization:
+            enabled: true
+      load:
+
+  hostmetrics/disk:
+    collection_interval: 60s
+    scrapers:
+      disk:
+      filesystem:
+
+  hostmetrics/network:
+    collection_interval: 60s
+    scrapers:
+      network:
+
+processors:
+  resourcedetection:
+    detectors: ["system"]
+    system:
+      hostname_sources: ["os"]
+      resource_attributes:
+        host.name:
+          enabled: true
+        host.id:
+          enabled: false
+        host.arch:
+          enabled: true
+        host.ip:
+          enabled: true
+        host.mac:
+          enabled: true
+        host.cpu.vendor.id:
+          enabled: true
+        host.cpu.family:
+          enabled: true
+        host.cpu.model.id:
+          enabled: true
+        host.cpu.model.name:
+          enabled: true
+        host.cpu.stepping:
+          enabled: true
+        host.cpu.cache.l2.size:
+          enabled: true
+        os.description:
+          enabled: true
+        os.type:
+          enabled: true
+
+exporters:
+  # Exporter to send logs and metrics to Elasticsearch
+  elasticsearch/otel:
+    endpoints: [ "http://otel-measurement:8080" ]
+    tls:
+      insecure: true
+    mapping:
+      mode: otel
+
+service:
+  pipelines:
+    metrics/hostmetrics:
+      receivers: [hostmetrics/system, hostmetrics/disk, hostmetrics/network]
+      processors: [resourcedetection]
+      exporters: [elasticsearch/otel]
