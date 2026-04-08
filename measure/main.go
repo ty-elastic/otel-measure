@@ -195,10 +195,11 @@ func statsLogger(interval time.Duration) {
 		rps := float64(count) / elapsed
 		throughput := float64(bytes) / elapsed / 1024 / 1024
 		dps := float64(docs) / elapsed
-		meteredMBPerHour := float64(metered) / elapsed * 3600 / 1024 / 1024
+		totalGBPerHour := float64(bytes) / elapsed * 3600 / 1024 / 1024 / 1024
+		meteredGBPerHour := float64(metered) / elapsed * 3600 / 1024 / 1024 / 1024
 
-		log.Printf("requests/s=%.0f  docs/s=%.0f  throughput=%.2f MB/s  metered_megabytes/hour=%.2f  total_requests=%d  total_docs=%d  total_bytes=%d  total_metered_bytes=%d",
-			rps, dps, throughput, meteredMBPerHour, count, docs, bytes, metered)
+		log.Printf("requests/s=%.0f  docs/s=%.0f  throughput=%.2f MB/s  total_gigabytes/hour=%.4f  metered_gigabytes/hour=%.4f  total_requests=%d  total_docs=%d  total_bytes=%d  total_metered_bytes=%d",
+			rps, dps, throughput, totalGBPerHour, meteredGBPerHour, count, docs, bytes, metered)
 	}
 }
 
