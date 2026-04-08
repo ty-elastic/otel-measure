@@ -18,9 +18,9 @@ import (
 )
 
 var (
-	requestCount     atomic.Int64
-	bytesReceived    atomic.Int64
-	documentCount    atomic.Int64
+	requestCount      atomic.Int64
+	bytesReceived     atomic.Int64
+	documentCount     atomic.Int64
 	totalMeteredBytes atomic.Int64
 )
 
@@ -54,7 +54,9 @@ func meterValue(v any) int64 {
 	switch val := v.(type) {
 	case string:
 		return int64(len(val))
-	case float64:
+	case float64, float32,
+		int, int8, int16, int32, int64,
+		uint, uint8, uint16, uint32, uint64:
 		return 8
 	case bool:
 		return 1
@@ -70,7 +72,10 @@ func meterValue(v any) int64 {
 			total += meterValue(elem)
 		}
 		return total
-	default: // null or unknown
+	case nil: // JSON null
+		return 0
+	default:
+		log.Printf("meterValue: unknown type %T: %v", v, v)
 		return 0
 	}
 }
