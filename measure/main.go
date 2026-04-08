@@ -45,6 +45,15 @@ type BulkItem struct {
 	Document json.RawMessage
 }
 
+// BulkResponse is the JSON body returned for every /_bulk request.
+type BulkResponse struct {
+	Errors        bool  `json:"errors"`
+	Items         []any `json:"items"`
+	DocumentCount int64 `json:"document_count"`
+	DocumentBytes int64 `json:"document_bytes"`
+	MeteredBytes  int64 `json:"metered_bytes"`
+}
+
 // meterValue recursively walks a decoded JSON value and returns its metered byte count:
 //   - string: UTF-8 byte length (base64 binary fields are strings, so this covers both)
 //   - number: 8 bytes
@@ -156,30 +165,45 @@ func bulkHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var metered, docBytes int64
+	var meteredBytes, docBytes, docCount int64
 	for _, item := range items {
 		if item.Document == nil {
 			continue
 		}
+		docCount++
 		docBytes += int64(len(item.Document))
 		var doc any
 		if err := json.Unmarshal(item.Document, &doc); err != nil {
 			log.Printf("error unmarshaling document for metering: %v", err)
 			continue
 		}
-		metered += meterValue(doc)
+		meteredBytes += meterValue(doc)
 	}
 
 	requestCount.Add(1)
 	bytesReceived.Add(int64(len(body)))
-	documentCount.Add(int64(len(items)))
+	documentCount.Add(docCount)
 	documentBytesReceived.Add(docBytes)
-	totalMeteredBytes.Add(metered)
+	totalMeteredBytes.Add(meteredBytes)
+
+	resp := BulkResponse{
+		Errors:        false,
+		Items:         []any{},
+		DocumentCount: docCount,
+		DocumentBytes: docBytes,
+		MeteredBytes:  meteredBytes,
+	}
+	respJSON, err := json.Marshal(resp)
+	if err != nil {
+		log.Printf("error marshaling bulk response: %v", err)
+		http.Error(w, "error marshaling response", http.StatusInternalServerError)
+		return
+	}
 
 	w.Header().Set("X-Elastic-Product", "Elasticsearch")
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"errors":false,"items":[]}`))
+	w.Write(respJSON)
 }
 
 func statsLogger(interval time.Duration) {
